@@ -11,8 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('instances', function (Blueprint $table) {
+        Schema::create('instancias', function (Blueprint $table) {
             $table->id();
+            $table->string('nome');
+            $table->unsignedBigInteger('auth_id');
             $table->timestamps();
         });
     }
