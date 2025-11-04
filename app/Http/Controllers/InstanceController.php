@@ -60,22 +60,18 @@ class InstanceController extends Controller
                 ->with('instanceUsers')
                 ->withCount('instanceUsers');
 
-            $result = $result->get()->map(function ($item) {
-                return [
-                    'id'             => $item->id,
-                    'nome'           => $item->nome,
-                    'usuarios_count' => $item->instance_users_count,
-                    'usuarios'       => $item->instanceUsers->map(function ($u) {
-                        return [
-                            'id'    => $u->usuario_id,
-                            'login' => $u->login,
-                            'saldo' => $u->saldo,
-                        ];
-                    }),
-                    'created_at' => $item->created_at,
-                    'updated_at' => $item->updated_at,
-                ];
-            });
+            $result = $result->get()->map(fn ($item): array => [
+                'id'             => $item->id,
+                'nome'           => $item->nome,
+                'usuarios_count' => $item->instance_users_count,
+                'usuarios'       => $item->instanceUsers->map(fn ($u): array => [
+                    'id'    => $u->usuario_id,
+                    'login' => $u->login,
+                    'saldo' => $u->saldo,
+                ]),
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
+            ]);
 
             $message = $result->count() > 0 ? 'Registros encontrados.' : 'Nenhum registro encontrado.';
 
@@ -104,15 +100,13 @@ class InstanceController extends Controller
                 'id'             => $i->id,
                 'nome'           => $i->nome,
                 'usuarios_count' => $i->instance_users_count,
-                'usuarios'       => $i->instanceUsers->map(function ($u) {
-                    return [
-                        'id'    => $u->usuario_id,
-                        'login' => $u->login,
-                        'saldo' => $u->saldo,
-                    ];
-                }),
-                'created_at'     => $i->created_at,
-                'updated_at'     => $i->updated_at,
+                'usuarios'       => $i->instanceUsers->map(fn ($u): array => [
+                    'id'    => $u->usuario_id,
+                    'login' => $u->login,
+                    'saldo' => $u->saldo,
+                ]),
+                'created_at' => $i->created_at,
+                'updated_at' => $i->updated_at,
             ];
 
             return ResponseFormatter::format(

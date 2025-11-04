@@ -30,9 +30,7 @@ class StoreInstanceRequest extends FormRequest
             'nome' => [
                 'required',
                 'string',
-                Rule::unique('instancias')->where(function ($query) {
-                    return $query->where('auth_id', $this->header('x-auth-id') ?? $this->input('auth_id'));
-                }),
+                Rule::unique('instancias')->where(fn ($query) => $query->where('auth_id', $this->header('x-auth-id') ?? $this->input('auth_id'))),
             ],
             'auth_id'          => 'required|string',
             'usuarios'         => 'required|array',
@@ -50,6 +48,7 @@ class StoreInstanceRequest extends FormRequest
     }
 
     #[Override]
+    #[\Override]
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([

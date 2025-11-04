@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\Validator;
@@ -24,7 +26,7 @@ class DestroyInstanceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'auth_id' => 'required|string'
+            'auth_id' => 'required|string',
         ];
     }
 
@@ -36,6 +38,7 @@ class DestroyInstanceRequest extends FormRequest
     }
 
     #[Override]
+    #[\Override]
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([

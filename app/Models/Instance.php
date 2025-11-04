@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace App\Models;
 
@@ -18,9 +18,6 @@ class Instance extends BaseModel
         'updated_at',
     ];
 
-    /**
-     * @return HasMany
-     */
     public function instanceUsers(): HasMany
     {
         return $this->hasMany(InstanceUser::class, 'instancia_id', 'id');
