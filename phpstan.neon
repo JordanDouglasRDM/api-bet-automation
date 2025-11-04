@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+
+parameters:
+
+    level: 7
+    paths:
+        - app
+        - database/migrations
+        - tests/Feature
+    ignoreErrors:
+            - '#Call to an undefined static method Tymon\\JWTAuth\\Facades\\JWTAuth::encode#'
+            - '#should return Illuminate\\Database\\Eloquent\\Relations\\BelongsTo<.+> but returns Illuminate\\Database\\Eloquent\\Relations\\BelongsTo<.+>#'
+            - '#uses generic trait Illuminate\\Database\\Eloquent\\Factories\\HasFactory but does not specify its types#'
