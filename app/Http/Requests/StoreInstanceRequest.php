@@ -36,7 +36,7 @@ class StoreInstanceRequest extends FormRequest
             'usuarios'         => 'required|array',
             'usuarios.*.id'    => 'required|integer',
             'usuarios.*.login' => 'required|string',
-            'usuarios.*.saldo' => 'required|numeric|min:0.01',
+            'usuarios.*.saldo' => 'required|numeric|min:0',
         ];
     }
 
