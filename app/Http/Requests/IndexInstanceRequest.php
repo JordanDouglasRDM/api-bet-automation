@@ -7,6 +7,7 @@ namespace App\Http\Requests;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Override;
 
 class IndexInstanceRequest extends FormRequest
 {
@@ -38,7 +39,6 @@ class IndexInstanceRequest extends FormRequest
     }
 
     #[Override]
-    #[\Override]
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([

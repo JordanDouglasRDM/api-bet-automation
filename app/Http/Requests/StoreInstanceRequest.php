@@ -8,6 +8,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
+use Override;
 
 class StoreInstanceRequest extends FormRequest
 {
@@ -48,7 +49,6 @@ class StoreInstanceRequest extends FormRequest
     }
 
     #[Override]
-    #[\Override]
     protected function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(response()->json([
