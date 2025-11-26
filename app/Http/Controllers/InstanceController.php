@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Exceptions\UnauthorizedException;
+use App\Http\Requests\CloneInstanceRequest;
 use App\Http\Requests\DestroyInstanceRequest;
 use App\Http\Requests\IndexInstanceRequest;
 use App\Http\Requests\ShowInstanceRequest;
@@ -23,99 +24,135 @@ class InstanceController extends Controller
 {
     public function update(UpdateInstanceRequest $request): JsonResponse
     {
+        $data = $request->validated();
+        $instanciaId = $data['id'];
+        $authId = $request->header('x-auth-id') ?? $data['auth_id'];
+
+        // IDs de usuário enviados no payload
+        $usuariosPayload = collect($data['usuarios']);
+
+        $usuarioIdsPayload = $usuariosPayload->pluck('id_pk')->filter()->unique();
+
+        //Segurança: impedir vínculo entre usuários de outra conta
+        $existsForeign = InstanceUser::whereIn('id', $usuarioIdsPayload)
+            ->where('auth_id', '!=', $authId)
+            ->exists();
+
+        if ($existsForeign) {
+            return ResponseFormatter::format(
+                ServiceResponse::error(
+                    new UnauthorizedException(),
+                    status: 401,
+                    message: 'Existe algum usuário que não pertence ao usuário autenticado.'
+                )
+            );
+        }
+
+        DB::beginTransaction();
+
         try {
-            $data = $request->validated();
-            $instanciaId = $data['id'];
-            $authId = $request->header('x-auth-id') ?? $data['auth_id'];
-
-            $usuarioIdsPayload = collect($data['usuarios'])
-                ->pluck('id_pk')
-                ->unique()
-                ->values();
-
-            $iu = InstanceUser::query()
-                ->whereIn('id', $usuarioIdsPayload)
-                ->whereNot('auth_id', $authId)
-                ->exists();
-
-            if ($iu) {
-                throw new UnauthorizedException();
-            }
-            DB::beginTransaction();
-
-            $instance = Instance::query()
-                ->where('id', $instanciaId)
+            // trava a instância
+            $instance = Instance::where('id', $instanciaId)
                 ->where('auth_id', $authId)
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            // atualiza nome
             $instance->update([
                 'nome' => $data['nome'],
             ]);
 
-            $usuarios = collect($data['usuarios']);
-            $usuarioIds = $usuarios->pluck('id')->all();
-
-            $rows = $usuarios->map(function ($u) use ($authId, $instance) {
+            // monta o dataset para upsert
+            $rows = $usuariosPayload->map(function ($u) use ($authId, $instance) {
                 return [
+                    'id'           => $u['id_pk'] ?? null,
                     'auth_id'      => $authId,
                     'instancia_id' => $instance->id,
                     'usuario_id'   => $u['id'],
-                    'id'           => $u['id_pk'] ?? null,
                     'login'        => $u['login'],
                     'saldo'        => $u['saldo'],
                 ];
             })->all();
 
-            if (!empty($rows)) {
-                foreach ($rows as $row) {
-                    if ($row['id']) {
-                        $iu = InstanceUser::where('auth_id', $authId)
-                            ->where('instancia_id', $instance->id)
-                            ->where('id', $row['id'])
-                            ->first();
-                        if (!$iu) {
-                            throw new ModelNotFoundException(
-                                "Não encontrado usuário '{$row['id']}' da instancia '{$instanciaId}'."
-                            );
-                        }
-                        $iu->update($row);
-                    } else {
-                        unset($row['id']);
-                        InstanceUser::create($row);
-                    }
-                }
-            }
+            // 🎯 Upsert elegante
+            // - Se tiver id_pk -> update
+            // - Se não tiver -> create
+            InstanceUser::upsert(
+                $rows,
+                ['id'],
+                ['login', 'saldo']
+            );
 
-            if (!empty($usuarioIds)) {
-                InstanceUser::query()
-                    ->where('auth_id', $authId)
-                    ->where('instancia_id', $instanciaId)
-                    ->whereNotIn('usuario_id', $usuarioIds)
-                    ->delete();
-            } else {
-                InstanceUser::query()
-                    ->where('auth_id', $authId)
-                    ->where('instancia_id', $instanciaId)
-                    ->delete();
-            }
+            // IDs reais dos usuário_id enviados (não id_pk)
+            $usuarioIds = $usuariosPayload->pluck('id')->unique()->all();
+
+            // Excluir quem não está no payload
+            InstanceUser::where('auth_id', $authId)
+                ->where('instancia_id', $instanciaId)
+                ->whereNotIn('usuario_id', $usuarioIds)
+                ->delete();
 
             DB::commit();
 
             return ResponseFormatter::format(
                 ServiceResponse::success(message: 'Instancia atualizada com sucesso.')
             );
-        } catch (UnauthorizedException $e) {
-            return ResponseFormatter::format(
-                ServiceResponse::error($e, status: 401, message: 'Existe algum usuário que não pertence ao usuário autenticado.')
-            );
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return ResponseFormatter::format(
                 ServiceResponse::error($e, status: 404, message: $e->getMessage())
             );
         } catch (Exception|\Throwable $e) {
             DB::rollBack();
+            return ResponseFormatter::format(
+                ServiceResponse::error($e)
+            );
+        }
+    }
+    public function clone(CloneInstanceRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $instanciaId = $data['id'];
+        $authId = $request->header('x-auth-id') ?? $data['auth_id'];
 
+        DB::beginTransaction();
+
+        try {
+            $instance = Instance::where('id', $instanciaId)
+                ->where('auth_id', $authId)
+                ->firstOrFail();
+
+            $usersOfInstance = InstanceUser::where('auth_id', $authId)
+                ->where('instancia_id', $instanciaId)
+                ->get();
+
+            $dataInstance['nome'] = "{$instance->nome} - Cópia";
+            $dataInstance['auth_id'] = $authId;
+            $cloned = Instance::create($dataInstance);
+
+            $usersToClone = $usersOfInstance->map(function (InstanceUser $user) use ($cloned) {
+               return [
+                   'auth_id' => $cloned->auth_id,
+                   'instancia_id' => $cloned->id,
+                   'usuario_id' => $user->usuario_id,
+                   'login' => $user->login,
+                   'saldo' => $user->saldo,
+               ];
+            });
+            InstanceUser::insert($usersToClone->toArray());
+
+            DB::commit();
+
+            return ResponseFormatter::format(
+                ServiceResponse::success(message: 'Instancia clonada com sucesso.')
+            );
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return ResponseFormatter::format(
+                ServiceResponse::error($e, status: 404, message: $e->getMessage())
+            );
+        } catch (Exception|\Throwable $e) {
+            DB::rollBack();
             return ResponseFormatter::format(
                 ServiceResponse::error($e)
             );

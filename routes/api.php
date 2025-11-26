@@ -10,4 +10,5 @@ Route::prefix('v1')
     ->group(function (): void {
         Route::apiResource('instancias', InstanceController::class)
             ->only(['index', 'store', 'destroy', 'show', 'update']);
+        Route::post('instancias/{instancia}', [InstanceController::class, 'clone']);
     });
