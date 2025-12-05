@@ -2,7 +2,7 @@
 
 declare(strict_types = 1);
 
-namespace App\Http\Requests\Auth;
+namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
@@ -10,7 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Override;
 
-class LoginUserRequest extends FormRequest
+class CheckLicenseRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -28,9 +28,8 @@ class LoginUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'login'    => 'required|string',
             'code'    => 'required|string',
-            'password' => 'required|string',
+            'login' => 'required|string',
         ];
     }
 

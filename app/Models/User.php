@@ -7,6 +7,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -27,7 +28,8 @@ class User extends Authenticatable implements Auditable, JWTSubject
      */
     protected $fillable = [
         'name',
-        'email',
+        'code',
+        'login',
         'password',
     ];
 
@@ -63,5 +65,15 @@ class User extends Authenticatable implements Auditable, JWTSubject
     public function getJWTCustomClaims(): array
     {
         return [];
+    }
+
+    public function license(): HasOne|User
+    {
+        return $this->hasOne(License::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->level === 'admin';
     }
 }

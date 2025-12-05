@@ -1,16 +1,13 @@
 <?php
 
-declare(strict_types = 1);
+namespace App\Http\Requests;
 
-namespace App\Http\Requests\Auth;
-
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Override;
 
-class LoginUserRequest extends FormRequest
+class StoreLicenseRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,14 +20,17 @@ class LoginUserRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'login'    => 'required|string',
-            'code'    => 'required|string',
-            'password' => 'required|string',
+            'status'          => 'required|in:pending,active',
+            'start_at'          => 'required|integer|min:1',
+            'expires_at'          => 'required|integer|min:1',
+            'users'         => 'required|array',
+            'users.*.code'    => 'required|string',
+            'users.*.login' => 'required|string',
         ];
     }
 
@@ -40,7 +40,7 @@ class LoginUserRequest extends FormRequest
         throw new HttpResponseException(response()->json([
             'status'  => 'error',
             'message' => 'Os dados fornecidos são inválidos!',
-            'error'   => $validator->errors(),
+            'errors'  => $validator->errors(),
         ], 422));
     }
 }

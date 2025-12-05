@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Exceptions\UnauthorizedException;
 use App\Http\Utilities\ServiceResponse;
 use App\Models\RefreshToken;
+use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
@@ -20,6 +21,19 @@ class AuthService
     public function login(array $credentials, Request $request): ServiceResponse
     {
         try {
+            $user = User::where('login', $credentials['login'])
+                ->where('code', $credentials['code'])
+                ->first();
+            if (!$user) {
+                throw new UnauthorizedException('Licença expirada ou inexistente.');
+            }
+            if (!$user->isAdmin()) {
+                return ServiceResponse::success(
+                    data: ['access_level' => 'operator'],
+                    message: 'Usuário autenticado como operador.',
+                );
+            }
+
             if (! $token = auth()->attempt($credentials)) {
                 throw new UnauthorizedException('Usuário ou senha inválidos.');
             }
@@ -46,6 +60,7 @@ class AuthService
             );
 
             $model = [
+                'access_level' => 'admin',
                 'access_token' => $token,
                 'token_type'   => 'bearer',
                 'device_token' => $deviceToken,

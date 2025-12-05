@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace App\Http\Controllers\Api\V1\Auth;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginUserRequest;
 use App\Http\Requests\Auth\LogoutAuthRequest;
 use App\Http\Utilities\ResponseFormatter;
@@ -11,7 +12,7 @@ use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class AuthController extends Controlle
+class AuthController extends Controller
 {
     public function __construct(protected AuthService $authService)
     {
