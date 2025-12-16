@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -17,6 +19,7 @@ class LicenseFactory extends Factory
     public function definition(): array
     {
         $statuses = ['active', 'active', 'inactive', 'revoked'];
+
         return [
             'status' => $this->faker->randomElement($statuses),
         ];

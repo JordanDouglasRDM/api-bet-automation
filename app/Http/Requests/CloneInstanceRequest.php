@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 use Override;
 
 class CloneInstanceRequest extends FormRequest
@@ -30,7 +31,8 @@ class CloneInstanceRequest extends FormRequest
         ];
     }
 
-    #[Override] public function validationData(): array
+    #[Override]
+    public function validationData(): array
     {
         return array_merge($this->all(), [
             'id' => $this->route('instancia'),

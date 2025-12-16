@@ -39,11 +39,11 @@ class UpdateInstanceRequest extends FormRequest
                 'string',
                 $rule,
             ],
-            'id'          => 'required|integer|exists:instancias,id',
+            'id'               => 'required|integer|exists:instancias,id',
             'auth_id'          => 'required|string',
             'usuarios'         => 'required|array',
             'usuarios.*.id'    => 'required|integer',
-            'usuarios.*.id_pk'    => 'nullable|integer',
+            'usuarios.*.id_pk' => 'nullable|integer',
             'usuarios.*.login' => 'required|string',
             'usuarios.*.saldo' => 'required|numeric|min:0',
         ];

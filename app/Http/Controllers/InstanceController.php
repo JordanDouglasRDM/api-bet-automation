@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace App\Http\Controllers;
 
@@ -24,9 +24,9 @@ class InstanceController extends Controller
 {
     public function update(UpdateInstanceRequest $request): JsonResponse
     {
-        $data = $request->validated();
+        $data        = $request->validated();
         $instanciaId = $data['id'];
-        $authId = $request->header('x-auth-id') ?? $data['auth_id'];
+        $authId      = $request->header('x-auth-id') ?? $data['auth_id'];
 
         // IDs de usuário enviados no payload
         $usuariosPayload = collect($data['usuarios']);
@@ -99,21 +99,24 @@ class InstanceController extends Controller
             );
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
+
             return ResponseFormatter::format(
                 ServiceResponse::error($e, status: 404, message: $e->getMessage())
             );
-        } catch (Exception|\Throwable $e) {
+        } catch (Exception | \Throwable $e) {
             DB::rollBack();
+
             return ResponseFormatter::format(
                 ServiceResponse::error($e)
             );
         }
     }
+
     public function clone(CloneInstanceRequest $request): JsonResponse
     {
-        $data = $request->validated();
+        $data        = $request->validated();
         $instanciaId = $data['id'];
-        $authId = $request->header('x-auth-id') ?? $data['auth_id'];
+        $authId      = $request->header('x-auth-id') ?? $data['auth_id'];
 
         DB::beginTransaction();
 
@@ -126,18 +129,18 @@ class InstanceController extends Controller
                 ->where('instancia_id', $instanciaId)
                 ->get();
 
-            $dataInstance['nome'] = "{$instance->nome} - Cópia";
+            $dataInstance['nome']    = "{$instance->nome} - Cópia";
             $dataInstance['auth_id'] = $authId;
-            $cloned = Instance::create($dataInstance);
+            $cloned                  = Instance::create($dataInstance);
 
             $usersToClone = $usersOfInstance->map(function (InstanceUser $user) use ($cloned) {
-               return [
-                   'auth_id' => $cloned->auth_id,
-                   'instancia_id' => $cloned->id,
-                   'usuario_id' => $user->usuario_id,
-                   'login' => $user->login,
-                   'saldo' => $user->saldo,
-               ];
+                return [
+                    'auth_id'      => $cloned->auth_id,
+                    'instancia_id' => $cloned->id,
+                    'usuario_id'   => $user->usuario_id,
+                    'login'        => $user->login,
+                    'saldo'        => $user->saldo,
+                ];
             });
             InstanceUser::insert($usersToClone->toArray());
 
@@ -148,11 +151,13 @@ class InstanceController extends Controller
             );
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
+
             return ResponseFormatter::format(
                 ServiceResponse::error($e, status: 404, message: $e->getMessage())
             );
-        } catch (Exception|\Throwable $e) {
+        } catch (Exception | \Throwable $e) {
             DB::rollBack();
+
             return ResponseFormatter::format(
                 ServiceResponse::error($e)
             );
@@ -182,7 +187,7 @@ class InstanceController extends Controller
             return ResponseFormatter::format(
                 ServiceResponse::success(message: 'Instancia criada com sucesso.')
             );
-        } catch (Exception|\Throwable $e) {
+        } catch (Exception | \Throwable $e) {
             DB::rollBack();
 
             return ResponseFormatter::format(
@@ -200,18 +205,18 @@ class InstanceController extends Controller
                 ->with('instanceUsers')
                 ->withCount('instanceUsers');
 
-            $result = $result->get()->map(fn($item): array => [
+            $result = $result->get()->map(fn ($item): array => [
                 'id'             => $item->id,
                 'nome'           => $item->nome,
                 'usuarios_count' => $item->instance_users_count,
-                'usuarios'       => $item->instanceUsers->map(fn($u): array => [
+                'usuarios'       => $item->instanceUsers->map(fn ($u): array => [
                     'id_pk' => $u->id,
                     'id'    => $u->usuario_id,
                     'login' => $u->login,
                     'saldo' => $u->saldo,
                 ]),
-                'created_at'     => $item->created_at,
-                'updated_at'     => $item->updated_at,
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
             ]);
 
             $message = $result->count() > 0 ? 'Registros encontrados.' : 'Nenhum registro encontrado.';
@@ -241,13 +246,13 @@ class InstanceController extends Controller
                 'id'             => $i->id,
                 'nome'           => $i->nome,
                 'usuarios_count' => $i->instance_users_count,
-                'usuarios'       => $i->instanceUsers->map(fn($u): array => [
+                'usuarios'       => $i->instanceUsers->map(fn ($u): array => [
                     'id'    => $u->usuario_id,
                     'login' => $u->login,
                     'saldo' => $u->saldo,
                 ]),
-                'created_at'     => $i->created_at,
-                'updated_at'     => $i->updated_at,
+                'created_at' => $i->created_at,
+                'updated_at' => $i->updated_at,
             ];
 
             return ResponseFormatter::format(

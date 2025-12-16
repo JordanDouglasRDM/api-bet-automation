@@ -15,8 +15,13 @@ use Throwable;
 
 class AuthService
 {
+    public function __construct(
+        protected LicenseService $licenceService
+    ) {
+    }
+
     /**
-     * @param array<string, mixed> $credentials
+     * @param  array<string, mixed>  $credentials
      */
     public function login(array $credentials, Request $request): ServiceResponse
     {
@@ -24,10 +29,14 @@ class AuthService
             $user = User::where('login', $credentials['login'])
                 ->where('code', $credentials['code'])
                 ->first();
-            if (!$user) {
+
+            if (! $user) {
                 throw new UnauthorizedException('Licença expirada ou inexistente.');
             }
-            if (!$user->isAdmin()) {
+
+            if (! $user->isAdmin()) {
+                $this->licenceService->check($user);
+
                 return ServiceResponse::success(
                     data: ['access_level' => 'operator'],
                     message: 'Usuário autenticado como operador.',
@@ -109,7 +118,7 @@ class AuthService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function logout(array $data, Request $request): ServiceResponse
     {

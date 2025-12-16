@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\Validator;
@@ -25,11 +27,12 @@ class StoreLicenseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status'          => 'required|in:pending,active',
-            'start_at'          => 'required|integer|min:1',
-            'expires_at'          => 'required|integer|min:1',
+            'status'        => 'required|in:pending,active',
+            'start_at'      => 'required_if:lifetime,false|date',
+            'expires_at'    => 'required_if:lifetime,false|date',
+            'lifetime'      => 'required|boolean',
             'users'         => 'required|array',
-            'users.*.code'    => 'required|string',
+            'users.*.code'  => 'required|string',
             'users.*.login' => 'required|string',
         ];
     }

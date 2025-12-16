@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+declare(strict_types = 1);
 
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,17 +10,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class License extends BaseModel
 {
     use HasFactory;
+
     protected $fillable = [
         'user_id',
         'status',
-        'start_at', //inicia no primeiro login
+        'start_at',
         'expires_at',
+        'lifetime',
         'activated_at', //a partir de quando que o usuário pode usar
+        'last_use',
     ];
+
     protected $casts = [
-        'start_at'    => 'datetime',
+        'start_at'     => 'datetime',
         'expires_at'   => 'datetime',
         'activated_at' => 'datetime',
+        'last_use'     => 'datetime',
     ];
 
     public function user(): BelongsTo

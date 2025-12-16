@@ -67,7 +67,7 @@ class User extends Authenticatable implements Auditable, JWTSubject
         return [];
     }
 
-    public function license(): HasOne|User
+    public function license(): HasOne | User
     {
         return $this->hasOne(License::class);
     }

@@ -20,19 +20,19 @@ class DatabaseSeeder extends Seeder
     {
         User::factory()->create([
             'code'     => 'lotoico.vip',
-            'login' => 'jhonny',
-            'level' => 'admin',
+            'login'    => 'jhonny',
+            'level'    => 'admin',
             'password' => Hash::make('404040'),
         ]);
 
         User::factory(9)->create();
 
         $users = User::all();
+
         foreach ($users as $user) {
             License::factory()->create([
-               'user_id' => $user->id
+                'user_id' => $user->id,
             ]);
         }
-
     }
 }
