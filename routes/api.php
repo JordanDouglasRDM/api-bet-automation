@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\InstanceController;
@@ -21,6 +21,7 @@ Route::prefix('v1')
         });
         Route::middleware('auth:api')->group(function (): void {
             Route::apiResource('license', LicenseController::class);
+            Route::post('license/delete-batch', [LicenseController::class, 'destroyBatch']);
         });
         Route::apiResource('instancias', InstanceController::class);
         Route::post('instancias/{instancia}', [InstanceController::class, 'clone']);

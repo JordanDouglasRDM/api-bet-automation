@@ -18,7 +18,7 @@ class LicenseFactory extends Factory
      */
     public function definition(): array
     {
-        $statuses = ['active', 'active', 'inactive', 'revoked'];
+        $statuses = ['active', 'expired', 'revoked'];
 
         return [
             'status' => $this->faker->randomElement($statuses),

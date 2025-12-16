@@ -28,9 +28,34 @@ class License extends BaseModel
         'last_use'     => 'datetime',
     ];
 
+    public const array STATUS_TRANSLATE = [
+        'active' => 'Ativa',
+        'inactive' => 'Inativa',
+        'revoked' => 'Revogada',
+        'pending' => 'Pendente',
+        'expired' => 'Expirada',
+    ];
+    public const array SEVERITY_TAG = [
+        'active' => 'success',
+        'inactive' => 'danger',
+        'revoked' => 'help',
+        'pending' => 'warn',
+        'expired' => 'danger',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getSeverityTag(): ?string
+    {
+        return self::SEVERITY_TAG[$this->status];
+    }
+
+    public function getStatusTranslated(): ?string
+    {
+        return self::STATUS_TRANSLATE[$this->status];
     }
 
     public function isValid(): bool
