@@ -41,7 +41,7 @@ class ResponseFormatter
     {
         $response = [
             'status'  => $serviceResponse->status,
-            'success'    => $serviceResponse->success,
+            'success' => $serviceResponse->success,
             'message' => $serviceResponse->message,
             'data'    => $serviceResponse->data,
         ];

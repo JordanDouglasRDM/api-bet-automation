@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\Validator;
@@ -25,7 +27,7 @@ class DestroyBatchLicenseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ids' => 'required|array',
+            'ids'   => 'required|array',
             'ids.*' => 'required|exists:licenses,id|distinct',
         ];
     }

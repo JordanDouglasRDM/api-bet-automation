@@ -28,19 +28,22 @@ class LicenseController extends Controller
 
         return ResponseFormatter::format($serviceResponse);
     }
+
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $serviceResponse       = $this->licenseService->destroy($id);
+        $serviceResponse = $this->licenseService->destroy($id);
 
         return ResponseFormatter::format($serviceResponse);
     }
+
     public function destroyBatch(DestroyBatchLicenseRequest $request): JsonResponse
     {
-        $data                  = $request->validated();
-        $serviceResponse       = $this->licenseService->destroyBatch($data);
+        $data            = $request->validated();
+        $serviceResponse = $this->licenseService->destroyBatch($data);
 
         return ResponseFormatter::format($serviceResponse);
     }
+
     public function update(UpdateLicenseRequest $request): JsonResponse
     {
         $data                  = $request->validated();
@@ -49,10 +52,11 @@ class LicenseController extends Controller
 
         return ResponseFormatter::format($serviceResponse);
     }
+
     public function index(Request $request): JsonResponse
     {
-//        $data                  = $request->validated();
-        $serviceResponse       = $this->licenseService->index();
+        //        $data                  = $request->validated();
+        $serviceResponse = $this->licenseService->index();
 
         return ResponseFormatter::format($serviceResponse);
     }

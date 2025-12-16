@@ -29,18 +29,18 @@ class License extends BaseModel
     ];
 
     public const array STATUS_TRANSLATE = [
-        'active' => 'Ativa',
+        'active'   => 'Ativa',
         'inactive' => 'Inativa',
-        'revoked' => 'Revogada',
-        'pending' => 'Pendente',
-        'expired' => 'Expirada',
+        'revoked'  => 'Revogada',
+        'pending'  => 'Pendente',
+        'expired'  => 'Expirada',
     ];
     public const array SEVERITY_TAG = [
-        'active' => 'success',
+        'active'   => 'success',
         'inactive' => 'danger',
-        'revoked' => 'help',
-        'pending' => 'warn',
-        'expired' => 'danger',
+        'revoked'  => 'help',
+        'pending'  => 'warn',
+        'expired'  => 'danger',
     ];
 
     public function user(): BelongsTo
