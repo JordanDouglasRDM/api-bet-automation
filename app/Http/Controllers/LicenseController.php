@@ -5,7 +5,7 @@ declare(strict_types = 1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CheckLicenseRequest;
-use App\Http\Requests\DestroyBatchLicenseRequest;
+use App\Http\Requests\BatchLicenseRequest;
 use App\Http\Requests\StoreLicenseRequest;
 use App\Http\Requests\UpdateLicenseRequest;
 use App\Http\Utilities\ResponseFormatter;
@@ -36,10 +36,17 @@ class LicenseController extends Controller
         return ResponseFormatter::format($serviceResponse);
     }
 
-    public function destroyBatch(DestroyBatchLicenseRequest $request): JsonResponse
+    public function destroyBatch(BatchLicenseRequest $request): JsonResponse
     {
         $data            = $request->validated();
         $serviceResponse = $this->licenseService->destroyBatch($data);
+
+        return ResponseFormatter::format($serviceResponse);
+    }
+    public function renewBatch(BatchLicenseRequest $request): JsonResponse
+    {
+        $data            = $request->validated();
+        $serviceResponse = $this->licenseService->renewBatch($data);
 
         return ResponseFormatter::format($serviceResponse);
     }

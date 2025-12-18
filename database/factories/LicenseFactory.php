@@ -1,9 +1,10 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Database\Factories;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,9 +20,12 @@ class LicenseFactory extends Factory
     public function definition(): array
     {
         $statuses = ['active', 'expired', 'revoked'];
-
+        $start = Carbon::now()->addDays($this->faker->numberBetween(1, 30));
+        $expires = $start->copy()->addDays($this->faker->numberBetween(3, 30));
         return [
-            'status' => $this->faker->randomElement($statuses),
+            'status'     => $this->faker->randomElement($statuses),
+            'start_at'   => $start,
+            'expires_at' => $expires,
         ];
     }
 }

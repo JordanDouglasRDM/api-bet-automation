@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Override;
 
-class DestroyBatchLicenseRequest extends FormRequest
+class BatchLicenseRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Http\Requests;
 
@@ -27,7 +27,6 @@ class StoreLicenseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status'        => 'required|in:pending,active',
             'start_at'      => 'required_if:lifetime,false|date',
             'expires_at'    => 'required_if:lifetime,false|date',
             'lifetime'      => 'required|boolean',

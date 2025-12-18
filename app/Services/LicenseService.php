@@ -1,10 +1,11 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Services;
 
 use App\Exceptions\UnauthorizedException;
+use App\Helpers\Helper;
 use App\Http\Utilities\ServiceResponse;
 use App\Models\License;
 use App\Models\User;
@@ -30,13 +31,13 @@ class LicenseService
                 }
 
                 $userCreated = User::create($user);
-                $users[]     = $userCreated;
+                $users[] = $userCreated;
             }
 
             foreach ($users as $user) {
                 License::create([
                     'user_id'    => $user->id,
-                    'status'     => $data['status'],
+                    'status'     => 'active',
                     'start_at'   => $data['start_at'],
                     'expires_at' => $data['expires_at'],
                     'lifetime'   => $data['lifetime'],
@@ -69,15 +70,18 @@ class LicenseService
                 ->get();
             $licence = $licence->map(function (License $item) {
                 return [
-                    'id' => $item->id,
-                    //                    'user_id'           => $item->user_id,
+                    'id'                => $item->id,
                     'status'            => $item->status,
                     'status_translated' => $item->getStatusTranslated(),
                     'severity_tag'      => $item->getSeverityTag(),
-                    'start_at'          => optional($item->start_at)->format('d/m/Y H:i') ?? '-',
+                    'start_at'          => optional($item->start_at)->format('d/m/Y') ?? '-',
+                    'start_iso'         => $item->start_at ? Carbon::parse($item->start_at)->toISOString() : '-',
                     'expires_at'        => optional($item->expires_at)->format('d/m/Y') ?? '-',
                     'expires_at_iso'    => $item->expires_at ? Carbon::parse($item->expires_at)->toISOString() : '-',
-                    'activated_at'      => optional($item->activated_at)->format('d/m/Y H:i') ?? '-',
+                    'days'              => Helper::getDaysBetweenDates(
+                        $item->start_at->toString(),
+                        $item->expires_at->toString()
+                    ),
                     'last_use'          => optional($item->last_use)->format('d/m/Y H:i:s') ?? '-',
                     'last_use_iso'      => $item->last_use ? Carbon::parse($item->last_use)->toISOString() : '-',
                     'lifetime'          => $item->lifetime,
@@ -91,13 +95,20 @@ class LicenseService
             $message = count($licence) > 0 ? 'Registros encontrados com sucesso.' : 'Nenhum registro encontrado.';
 
             return ServiceResponse::success($licence, $message);
-        } catch (UnauthorizedException $e) {
-            return ServiceResponse::error($e, $e->getCode());
         } catch (\InvalidArgumentException $e) {
             return ServiceResponse::error($e, 400, $e->getMessage());
         } catch (\Exception $e) {
             return ServiceResponse::error($e);
         }
+    }
+
+    public function expiredLicensesCheck(): int
+    {
+        return License::where('status', 'active')
+            ->whereDate('expires_at', '<', Carbon::today())
+            ->update([
+                'status' => 'expired',
+            ]);
     }
 
     public function destroy(int $licenseId): ServiceResponse
@@ -138,15 +149,51 @@ class LicenseService
         return "{$count} licenças e usuários excluídos com sucesso.";
     }
 
+    private function getMessageByLengthLicensesToRenew(array $data): string
+    {
+        $count = count($data);
+
+        if ($count === 1) {
+            return '1 licença renovada com sucesso.';
+        }
+
+        return "{$count} licenças renovadas com sucesso.";
+    }
+
     public function update(array $data): ServiceResponse
     {
         try {
+            $message = 'Licença atualizada com sucesso.';
             $license = License::findOrFail($data['id']);
+            if (isset($data['status'])) {
+                $message = $this->handleUpdateStatus($license, $data['status']);
+            }
 
-            return ServiceResponse::success([], 'Licença atualizada com sucesso.');
+            return ServiceResponse::success([], $message);
         } catch (ModelNotFoundException $e) {
             return ServiceResponse::error($e, 404, 'Licença não encontrada.');
-        } catch (\Exception $e) {
+        } catch (\Throwable|\Exception $e) {
+            return ServiceResponse::error($e);
+        }
+    }
+
+    public function renewBatch(array $data): ServiceResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $licenses = License::whereIn('id', $data['ids'])->get();
+            foreach ($licenses as $license) {
+                $this->handleRenewLicense($license);
+            }
+
+            DB::commit();
+            return ServiceResponse::success([], $this->getMessageByLengthLicensesToRenew($data['ids']));
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+            return ServiceResponse::error($e, 404, 'Licença não encontrada.');
+        } catch (\Throwable|\Exception $e) {
+            DB::rollBack();
             return ServiceResponse::error($e);
         }
     }
@@ -154,20 +201,38 @@ class LicenseService
     /**
      * @throws \Throwable
      */
-    private function handleRevokeLicense(License $license): void
+    private function handleUpdateStatus(License $license, string $status): string
+    {
+        return match ($status) {
+            'renew' => $this->handleRenewLicense($license),
+            'revoke' => $this->handleRevokeLicense($license),
+        };
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    private function handleRevokeLicense(License $license): string
     {
         $license->updateOrFail(['status' => 'revoked']);
+        return 'Licença revogada com sucesso.';
     }
 
-    private function handleRenewLicense(License $license)
+    private function handleRenewLicense(License $license): string
     {
-        //contar a diferença de dias de 'start_at' e 'expires_at'
-        //'start_at' deve ser o dia atual
-        //'expires_at' deve ser a diferenças de dias no futuro'
-    }
+        $days = Helper::getDaysBetweenDates($license->start_at->toString(), $license->expires_at->toString());
 
-    private function handleActivateLicense(License $license)
-    {
+        $now = Carbon::now();
+
+        $newExpires = $now->copy()->addDays($days - 1)->format('Y-m-d');
+        $values = [
+            'start_at'   => $now->format('Y-m-d'),
+            'expires_at' => $newExpires,
+            'status'     => 'active',
+        ];
+
+        $license->update($values);
+        return "Licença renovada para $days dia(s) de uso.";
     }
 
     public function check(User $user): ServiceResponse
@@ -178,12 +243,12 @@ class LicenseService
             $licence = $user->license;
 
             //se não existe licença, emite erro
-            if (! $licence) {
+            if (!$licence) {
                 throw new UnauthorizedException();
             }
 
             //primeiro uso da licença (primeiro login)
-            if (! $licence->starts_at) {
+            if (!$licence->starts_at) {
                 $licence->starts_at = now();
                 $licence->save();
 
@@ -191,7 +256,7 @@ class LicenseService
             }
 
             //licença revogada, ou expirada
-            if (! $licence->isValid()) {
+            if (!$licence->isValid()) {
                 throw new UnauthorizedException();
             }
 

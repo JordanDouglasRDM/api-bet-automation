@@ -22,6 +22,7 @@ Route::prefix('v1')
         Route::middleware('auth:api')->group(function (): void {
             Route::apiResource('license', LicenseController::class);
             Route::post('license/delete-batch', [LicenseController::class, 'destroyBatch']);
+            Route::post('license/renew-batch', [LicenseController::class, 'renewBatch']);
         });
         Route::apiResource('instancias', InstanceController::class);
         Route::post('instancias/{instancia}', [InstanceController::class, 'clone']);

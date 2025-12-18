@@ -17,7 +17,7 @@ class License extends BaseModel
         'start_at',
         'expires_at',
         'lifetime',
-        'activated_at', //a partir de quando que o usuário pode usar
+        'cambista_ativo_count',
         'last_use',
     ];
 

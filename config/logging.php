@@ -65,6 +65,12 @@ return [
             'level'  => 'info',
         ],
 
+        'commands' => [
+            'driver' => 'single',
+            'path'   => storage_path('logs/commands.log'),
+            'level'  => 'info',
+            'replace_placeholders' => true,
+        ],
         'single' => [
             'driver'               => 'single',
             'path'                 => storage_path('logs/laravel.log'),
