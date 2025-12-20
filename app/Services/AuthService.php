@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Services;
 
@@ -9,6 +9,7 @@ use App\Http\Utilities\ServiceResponse;
 use App\Models\RefreshToken;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
 use Throwable;
@@ -17,11 +18,12 @@ class AuthService
 {
     public function __construct(
         protected LicenseService $licenceService
-    ) {
+    )
+    {
     }
 
     /**
-     * @param  array<string, mixed>  $credentials
+     * @param array<string, mixed> $credentials
      */
     public function login(array $credentials, Request $request): ServiceResponse
     {
@@ -30,27 +32,31 @@ class AuthService
                 ->where('code', $credentials['code'])
                 ->first();
 
-            if (! $user) {
+            if (!$user) {
                 throw new UnauthorizedException('Licença expirada ou inexistente.');
             }
 
-            if (! $user->isAdmin()) {
-                $this->licenceService->check($user);
+            if (!$user->isAdmin()) {
+                $uuid = $user->license->uuid;
+                $this->licenceService->helperCheckLicense($uuid);
 
                 return ServiceResponse::success(
-                    data: ['access_level' => 'operator'],
+                    data: [
+                        'access_level' => 'operator',
+                        'license_uuid' => $uuid
+                    ],
                     message: 'Usuário autenticado como operador.',
                 );
             }
 
-            if (! $token = auth()->attempt($credentials)) {
+            if (!$token = auth()->attempt($credentials)) {
                 throw new UnauthorizedException('Usuário ou senha inválidos.');
             }
 
             /** @var Authenticatable $user */
             $user = auth()->user();
 
-            $deviceId      = Uuid::uuid4()->toString();
+            $deviceId = Uuid::uuid4()->toString();
             $tokenUnhashed = Uuid::uuid4()->toString();
 
             RefreshToken::create([
@@ -95,6 +101,8 @@ class AuthService
             );
         } catch (UnauthorizedException $e) {
             return ServiceResponse::error($e, 401);
+        } catch (ModelNotFoundException $e) {
+            return ServiceResponse::error($e, 404, $e->getMessage());
         } catch (Throwable $e) {
             return ServiceResponse::error($e);
         }
@@ -103,7 +111,7 @@ class AuthService
     public function logged(): ServiceResponse
     {
         try {
-            if (! auth()->check()) {
+            if (!auth()->check()) {
                 throw new UnauthorizedException();
             }
 
@@ -118,12 +126,12 @@ class AuthService
     }
 
     /**
-     * @param  array<string, mixed>  $data
+     * @param array<string, mixed> $data
      */
     public function logout(array $data, Request $request): ServiceResponse
     {
         try {
-            if (! auth()->check()) {
+            if (!auth()->check()) {
                 throw new UnauthorizedException();
             }
 
@@ -162,13 +170,13 @@ class AuthService
         try {
             $refreshToken = $request->cookie('refresh_token');
 
-            if (! is_string($refreshToken)) {
+            if (!is_string($refreshToken)) {
                 throw new UnauthorizedException('Refresh token não encontrado.');
             }
 
             $refresh = RefreshToken::where('token', hash('sha256', $refreshToken))->first();
 
-            if (! $refresh || ! $refresh->isValid()) {
+            if (!$refresh || !$refresh->isValid()) {
                 throw new UnauthorizedException('Refresh token inválido');
             }
 
@@ -182,7 +190,7 @@ class AuthService
 
             $user = $refresh->user;
 
-            if (! $user instanceof Authenticatable) {
+            if (!$user instanceof Authenticatable) {
                 throw new UnauthorizedException('Usuário inválido.');
             }
 

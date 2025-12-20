@@ -26,4 +26,5 @@ Route::prefix('v1')
         });
         Route::apiResource('instancias', InstanceController::class);
         Route::post('instancias/{instancia}', [InstanceController::class, 'clone']);
+        Route::put('license/{license}/metrics', [LicenseController::class, 'metrics']);
     });

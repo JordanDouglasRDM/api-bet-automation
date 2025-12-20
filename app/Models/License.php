@@ -1,11 +1,12 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Ramsey\Uuid\Uuid;
 
 class License extends BaseModel
 {
@@ -13,6 +14,7 @@ class License extends BaseModel
 
     protected $fillable = [
         'user_id',
+        'uuid',
         'status',
         'start_at',
         'expires_at',
@@ -43,6 +45,16 @@ class License extends BaseModel
         'expired'  => 'danger',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (License $license) {
+            if (empty($license->uuid)) {
+                $license->uuid = Uuid::uuid4()->toString();
+            }
+        });
+    }
+
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -60,9 +72,8 @@ class License extends BaseModel
 
     public function isValid(): bool
     {
-        return $this->status === 'active'
-            && $this->starts_at->lte(now())
-            && $this->activated_at !== null
-            && $this->expires_at->gte(now());
+        if ($this->status !== 'active') return false;
+        if ($this->lifetime) return true;
+        return now()->lte($this->expires_at->endOfDay());
     }
 }

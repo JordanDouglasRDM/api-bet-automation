@@ -15,6 +15,7 @@ return new class () extends Migration
     {
         Schema::create('licenses', function (Blueprint $table) {
             $table->id();
+            $table->uuid()->unique();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('status');
             $table->smallInteger('cambistas_ativos_count')->nullable();

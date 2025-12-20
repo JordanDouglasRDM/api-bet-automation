@@ -207,6 +207,25 @@ class LicenseService
         }
     }
 
+    public function metrics(array $data): ServiceResponse
+    {
+        try {
+            $license = License::where('uuid', $data['uuid'])->firstOrFail();
+
+            if ($license->cambistas_ativos_count !== $data['metrics_count']) {
+                $license->updateOrFail([
+                    'cambistas_ativos_count' => $data['metrics_count']
+                ]);
+            }
+
+            return ServiceResponse::success([], 'Metrics updated successfully.');
+        } catch (ModelNotFoundException $e) {
+            return ServiceResponse::error($e, 404, $e->getMessage());
+        } catch (\Throwable|\Exception $e) {
+            return ServiceResponse::error($e);
+        }
+    }
+
     public function renewBatch(array $data): ServiceResponse
     {
         try {
@@ -250,6 +269,11 @@ class LicenseService
 
     private function handleRenewLicense(License $license): string
     {
+        if ($license->lifetime) {
+            $license->update(['status' => 'active']);
+            return 'Licença vitalícia renovada com sucesso.';
+        }
+
         $days = Helper::getDaysBetweenDates($license->start_at->toString(), $license->expires_at->toString());
 
         $now = Carbon::now();
@@ -265,36 +289,39 @@ class LicenseService
         return "Licença renovada para $days dia(s) de uso.";
     }
 
-    public function check(User $user): ServiceResponse
+    public function check(array $data): ServiceResponse
     {
         try {
-            $data = ['status' => 'sucess'];
-            //usuário diferente de adm, verificar licença
-            $licence = $user->license;
-
-            //se não existe licença, emite erro
-            if (!$licence) {
-                throw new UnauthorizedException();
-            }
-
-            //primeiro uso da licença (primeiro login)
-            if (!$licence->starts_at) {
-                $licence->starts_at = now();
-                $licence->save();
-
-                return ServiceResponse::success($data, 'Usuário com licença válida.');
-            }
-
-            //licença revogada, ou expirada
-            if (!$licence->isValid()) {
-                throw new UnauthorizedException();
-            }
+            $this->helperCheckLicense($data['uuid']);
 
             return ServiceResponse::success($data, 'Usuário com licença válida.');
         } catch (UnauthorizedException $e) {
             return ServiceResponse::error($e, 401, 'Licença expirada ou inexistente.');
-        } catch (\Exception $e) {
+        } catch (\Throwable|\Exception $e) {
             return ServiceResponse::error($e);
         }
+    }
+
+    /**
+     * @throws \Throwable
+     * @throws UnauthorizedException
+     */
+    public function helperCheckLicense(string $uuid): ?License
+    {
+        $licence = License::where('uuid', $uuid)->firstOrFail();
+
+        //se não existe licença, emite erro
+        if (!$licence) {
+            throw new UnauthorizedException();
+        }
+
+        //licença revogada, ou expirada
+        if (!$licence->isValid()) {
+            throw new UnauthorizedException();
+        }
+
+        $licence->updateOrFail(['last_use' => now()]);
+
+        return $licence;
     }
 }

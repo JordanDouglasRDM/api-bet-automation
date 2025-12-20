@@ -1,11 +1,12 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CheckLicenseRequest;
 use App\Http\Requests\BatchLicenseRequest;
+use App\Http\Requests\MetricsLicenseRequest;
 use App\Http\Requests\StoreLicenseRequest;
 use App\Http\Requests\UpdateLicenseRequest;
 use App\Http\Utilities\ResponseFormatter;
@@ -17,13 +18,14 @@ class LicenseController extends Controller
 {
     public function __construct(
         protected LicenseService $licenseService
-    ) {
+    )
+    {
     }
 
     public function store(StoreLicenseRequest $request): JsonResponse
     {
-        $data                  = $request->validated();
-        $serviceResponse       = $this->licenseService->store($data);
+        $data = $request->validated();
+        $serviceResponse = $this->licenseService->store($data);
         $serviceResponse->data = null;
 
         return ResponseFormatter::format($serviceResponse);
@@ -38,14 +40,15 @@ class LicenseController extends Controller
 
     public function destroyBatch(BatchLicenseRequest $request): JsonResponse
     {
-        $data            = $request->validated();
+        $data = $request->validated();
         $serviceResponse = $this->licenseService->destroyBatch($data);
 
         return ResponseFormatter::format($serviceResponse);
     }
+
     public function renewBatch(BatchLicenseRequest $request): JsonResponse
     {
-        $data            = $request->validated();
+        $data = $request->validated();
         $serviceResponse = $this->licenseService->renewBatch($data);
 
         return ResponseFormatter::format($serviceResponse);
@@ -53,8 +56,17 @@ class LicenseController extends Controller
 
     public function update(UpdateLicenseRequest $request): JsonResponse
     {
-        $data                  = $request->validated();
-        $serviceResponse       = $this->licenseService->update($data);
+        $data = $request->validated();
+        $serviceResponse = $this->licenseService->update($data);
+        $serviceResponse->data = null;
+
+        return ResponseFormatter::format($serviceResponse);
+    }
+
+    public function metrics(MetricsLicenseRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $serviceResponse = $this->licenseService->metrics($data);
         $serviceResponse->data = null;
 
         return ResponseFormatter::format($serviceResponse);
@@ -70,7 +82,7 @@ class LicenseController extends Controller
 
     public function check(CheckLicenseRequest $request): JsonResponse
     {
-        $data            = $request->validated();
+        $data = $request->validated();
         $serviceResponse = $this->licenseService->check($data);
 
         return ResponseFormatter::format($serviceResponse);
