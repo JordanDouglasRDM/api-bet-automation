@@ -32,17 +32,35 @@ class StoreLicenseRequest extends FormRequest
             'lifetime'      => 'required|boolean',
             'users'         => 'required|array',
             'users.*.code'  => 'required|string',
-            'users.*.login' => 'required|string',
+            'users.*.login' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    $index = explode('.', $attribute)[1];
+                    $code = data_get($this->users, "$index.code");
+
+                    $exists = \DB::table('users')
+                        ->where('code', $code)
+                        ->where('login', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail("Para o código '$code' já existe o login '$value' cadastrado.");
+                    }
+                }
+            ],
         ];
     }
 
     #[Override]
     protected function failedValidation(Validator $validator)
     {
+        $messages = implode('<br>', $validator->errors()->all());
         throw new HttpResponseException(response()->json([
-            'status'  => 'error',
-            'message' => 'Os dados fornecidos são inválidos!',
-            'errors'  => $validator->errors(),
+            'status'          => 'error',
+            'message'         => 'Os dados fornecidos são inválidos!',
+            'errors_imploded' => $messages,
+            'errors'          => $validator->errors(),
         ], 422));
     }
 }

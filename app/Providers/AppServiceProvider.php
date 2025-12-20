@@ -54,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
     private function configDate(): void
     {
         Date::use(CarbonImmutable::class);
+        CarbonImmutable::setLocale('pt_BR');
     }
 
     /**

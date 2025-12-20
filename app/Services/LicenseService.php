@@ -10,6 +10,7 @@ use App\Http\Utilities\ServiceResponse;
 use App\Models\License;
 use App\Models\User;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
@@ -22,14 +23,6 @@ class LicenseService
             $users = [];
 
             foreach ($data['users'] as $user) {
-                $userFind = User::where('login', $user['login'])
-                    ->where('code', $user['code'])
-                    ->first();
-
-                if ($userFind) {
-                    throw new \InvalidArgumentException('Usuário já cadastrado.');
-                }
-
                 $userCreated = User::create($user);
                 $users[] = $userCreated;
             }
@@ -38,8 +31,8 @@ class LicenseService
                 License::create([
                     'user_id'    => $user->id,
                     'status'     => 'active',
-                    'start_at'   => $data['start_at'],
-                    'expires_at' => $data['expires_at'],
+                    'start_at'   => $data['lifetime'] ? null : $data['start_at'],
+                    'expires_at' => $data['lifetime'] ? null : $data['expires_at'],
                     'lifetime'   => $data['lifetime'],
                 ]);
             }
@@ -64,31 +57,38 @@ class LicenseService
     public function index(array $data = null): ServiceResponse
     {
         try {
+            Carbon::setLocale('pt_BR');
             $licence = License::with('user')
                 ->orderBy('licenses.created_at', 'desc')
                 ->whereRelation('user', 'level', 'operator')
                 ->get();
             $licence = $licence->map(function (License $item) {
                 return [
-                    'id'                => $item->id,
-                    'status'            => $item->status,
-                    'status_translated' => $item->getStatusTranslated(),
-                    'severity_tag'      => $item->getSeverityTag(),
-                    'start_at'          => optional($item->start_at)->format('d/m/Y') ?? '-',
-                    'start_iso'         => $item->start_at ? Carbon::parse($item->start_at)->toISOString() : '-',
-                    'expires_at'        => optional($item->expires_at)->format('d/m/Y') ?? '-',
-                    'expires_at_iso'    => $item->expires_at ? Carbon::parse($item->expires_at)->toISOString() : '-',
-                    'days'              => Helper::getDaysBetweenDates(
+                    'id'                     => $item->id,
+                    'status'                 => $item->status,
+                    'status_translated'      => $item->getStatusTranslated(),
+                    'severity_tag'           => $item->getSeverityTag(),
+                    'start_at'               => optional($item->start_at)->format('d/m/Y') ?? '-',
+                    'start_iso'              => $item->start_at ? Carbon::parse($item->start_at)->toISOString() : '-',
+                    'start_long_text'        => $this->longDate($item->start_at, false),
+                    'expires_at'             => optional($item->expires_at)->format('d/m/Y') ?? '-',
+                    'expires_at_iso'         => $item->expires_at ? Carbon::parse($item->expires_at)->toISOString() : '-',
+                    'expires_long_text'      => $this->longDate($item->expires_at, false),
+                    'days'                   => $item->start_at ? Helper::getDaysBetweenDates(
                         $item->start_at->toString(),
                         $item->expires_at->toString()
-                    ),
-                    'last_use'          => optional($item->last_use)->format('d/m/Y H:i:s') ?? '-',
-                    'last_use_iso'      => $item->last_use ? Carbon::parse($item->last_use)->toISOString() : '-',
-                    'lifetime'          => $item->lifetime,
-                    'lifetime_text'     => $item->lifetime ? 'Sim' : 'Não',
-                    'created_at'        => $item->created_at->format('d/m/Y H:i') ?? '-',
-                    'updated_at'        => $item->updated_at->format('d/m/Y H:i') ?? '-',
-                    'user'              => $item->user,
+                    ) : 0,
+                    'cambistas_ativos_count' => $item->cambistas_ativos_count ?? '-',
+                    'last_use'               => optional($item->last_use)->format('d/m/Y H:i:s') ?? '-',
+                    'last_use_iso'           => $item->last_use ? Carbon::parse($item->last_use)->toISOString() : '-',
+                    'last_use_long_text'     => $this->longDate($item->last_use),
+                    'lifetime'               => $item->lifetime,
+                    'lifetime_text'          => $item->lifetime ? 'Sim' : 'Não',
+                    'created_at'             => $item->created_at->format('d/m/Y H:i') ?? '-',
+                    'created_long_text'      => $this->longDate($item->created_at),
+                    'updated_at'             => $item->updated_at->format('d/m/Y H:i') ?? '-',
+                    'updated_long_text'      => $this->longDate($item->updated_at),
+                    'user'                   => $item->user,
                 ];
             });
 
@@ -100,6 +100,15 @@ class LicenseService
         } catch (\Exception $e) {
             return ServiceResponse::error($e);
         }
+    }
+
+    private function longDate(?CarbonInterface $date, bool $hour = true): string
+    {
+        $format = $hour ? 'l, d \d\e F \d\e Y (H:i:s)' : 'l, d \d\e F \d\e Y';
+        return $date
+            ? ucfirst($date->locale('pt_BR')
+                ->translatedFormat($format))
+            : '-';
     }
 
     public function expiredLicensesCheck(): int
@@ -163,16 +172,35 @@ class LicenseService
     public function update(array $data): ServiceResponse
     {
         try {
+            DB::beginTransaction();
             $message = 'Licença atualizada com sucesso.';
             $license = License::findOrFail($data['id']);
+
             if (isset($data['status'])) {
                 $message = $this->handleUpdateStatus($license, $data['status']);
             }
 
+            unset($data['id']);
+            $user = $license->user;
+            $user->updateOrFail([
+                'code'  => $data['code'],
+                'login' => $data['login'],
+            ]);
+
+            $license->updateOrFail([
+                'start_at'   => $data['start_at'] ?? null,
+                'expires_at' => $data['expires_at'] ?? null,
+                'lifetime'   => $data['lifetime'],
+            ]);
+            $this->expiredLicensesCheck();
+
+            DB::commit();
             return ServiceResponse::success([], $message);
         } catch (ModelNotFoundException $e) {
+            DB::rollBack();
             return ServiceResponse::error($e, 404, 'Licença não encontrada.');
         } catch (\Throwable|\Exception $e) {
+            DB::rollBack();
             return ServiceResponse::error($e);
         }
     }

@@ -1,12 +1,13 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 use Override;
 
 class UpdateLicenseRequest extends FormRequest
@@ -26,9 +27,27 @@ class UpdateLicenseRequest extends FormRequest
      */
     public function rules(): array
     {
+        $id = $this->route('license');
         return [
-            'id'     => 'required|integer|exists:licenses,id',
-            'status' => 'required|in:revoke,renew',
+            'id'         => 'required|integer|exists:licenses,id',
+            'start_at'   => 'required_if:lifetime,false|date',
+            'expires_at' => 'required_if:lifetime,false|date',
+            'lifetime'   => 'required|boolean',
+            'code'       => 'required|string',
+            'login'      => [
+                'required',
+                'string',
+                Rule::unique('users', 'login')
+                    ->where(fn($q) => $q->where('code', $this->code))
+                    ->ignore($id, 'id'),
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'login.unique' => 'Para o código informado, este login já está cadastrado.',
         ];
     }
 
@@ -42,10 +61,12 @@ class UpdateLicenseRequest extends FormRequest
     #[Override]
     protected function failedValidation(Validator $validator)
     {
+        $messages = implode('<br>', $validator->errors()->all());
         throw new HttpResponseException(response()->json([
-            'status'  => 'error',
-            'message' => 'Os dados fornecidos são inválidos!',
-            'errors'  => $validator->errors(),
+            'status'          => 'error',
+            'message'         => 'Os dados fornecidos são inválidos!',
+            'errors'          => $validator->errors(),
+            'errors_imploded' => $messages,
         ], 422));
     }
 }

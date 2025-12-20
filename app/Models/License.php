@@ -17,7 +17,7 @@ class License extends BaseModel
         'start_at',
         'expires_at',
         'lifetime',
-        'cambista_ativo_count',
+        'cambistas_ativos_count',
         'last_use',
     ];
 

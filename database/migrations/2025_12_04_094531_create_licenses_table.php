@@ -17,7 +17,7 @@ return new class () extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->string('status');
-            $table->smallInteger('cambista_ativo_count')->nullable();
+            $table->smallInteger('cambistas_ativos_count')->nullable();
             $table->timestamp('start_at')->nullable();
             $table->timestamp('expires_at')->nullable();
             $table->timestamp('last_use')->nullable();
