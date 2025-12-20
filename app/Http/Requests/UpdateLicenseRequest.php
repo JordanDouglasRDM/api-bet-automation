@@ -27,11 +27,20 @@ class UpdateLicenseRequest extends FormRequest
      */
     public function rules(): array
     {
+        $status = $this->status;
+        if ($status) {
+            return [
+                'id'     => 'required|integer|exists:licenses,id',
+                'status' => 'required|in:revoke,renew',
+            ];
+        }
+
+
         $id = $this->route('license');
         return [
             'id'         => 'required|integer|exists:licenses,id',
-            'start_at'   => 'required_if:lifetime,false|date',
-            'expires_at' => 'required_if:lifetime,false|date',
+            'start_at'   => 'required_if:lifetime,false|date|after_or_equal:today|before_or_equal:expires_at',
+            'expires_at' => 'required_if:lifetime,false|date|after_or_equal:start_at',
             'lifetime'   => 'required|boolean',
             'code'       => 'required|string',
             'login'      => [
@@ -48,6 +57,9 @@ class UpdateLicenseRequest extends FormRequest
     {
         return [
             'login.unique' => 'Para o código informado, este login já está cadastrado.',
+            'start_at.after_or_equal'   => 'A data inicial não pode ser anterior a hoje.',
+            'start_at.before_or_equal'  => 'A data inicial não pode ser maior que a data final.',
+            'expires_at.after_or_equal' => 'A data final não pode ser menor que a data inicial.',
         ];
     }
 

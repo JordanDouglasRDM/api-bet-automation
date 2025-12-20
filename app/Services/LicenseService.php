@@ -178,6 +178,8 @@ class LicenseService
 
             if (isset($data['status'])) {
                 $message = $this->handleUpdateStatus($license, $data['status']);
+                DB::commit();
+                return ServiceResponse::success([], $message);
             }
 
             unset($data['id']);

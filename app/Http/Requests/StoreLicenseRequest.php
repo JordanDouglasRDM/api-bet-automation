@@ -27,8 +27,8 @@ class StoreLicenseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'start_at'      => 'required_if:lifetime,false|date',
-            'expires_at'    => 'required_if:lifetime,false|date',
+            'start_at'   => 'required_if:lifetime,false|date|after_or_equal:today|before_or_equal:expires_at',
+            'expires_at' => 'required_if:lifetime,false|date|after_or_equal:start_at',
             'lifetime'      => 'required|boolean',
             'users'         => 'required|array',
             'users.*.code'  => 'required|string',
@@ -49,6 +49,14 @@ class StoreLicenseRequest extends FormRequest
                     }
                 }
             ],
+        ];
+    }
+    public function messages(): array
+    {
+        return [
+            'start_at.after_or_equal'   => 'A data inicial não pode ser anterior a hoje.',
+            'start_at.before_or_equal'  => 'A data inicial não pode ser maior que a data final.',
+            'expires_at.after_or_equal' => 'A data final não pode ser menor que a data inicial.',
         ];
     }
 
