@@ -112,7 +112,7 @@ class LicenseService
             : '-';
     }
 
-    public function expiredLicensesCheck(): int
+    public function expiredLicensesCheck(): bool|int
     {
         return License::where('status', 'active')
             ->whereDate('expires_at', '<', Carbon::today())

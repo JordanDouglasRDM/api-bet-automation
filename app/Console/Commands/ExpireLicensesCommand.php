@@ -8,7 +8,7 @@ use Log;
 
 class ExpireLicensesCommand extends Command
 {
-    protected $signature = 'licenses:expire';
+    protected $signature = 'licenses:check';
     protected $description = 'Atualiza licenças ativas para expiradas.';
 
     public function __construct(

@@ -37,13 +37,20 @@ class AuthService
             }
 
             if (!$user->isAdmin()) {
-                $uuid = $user->license->uuid;
+                $license = $user->license;
+                $uuid = $license->uuid;
                 $this->licenceService->helperCheckLicense($uuid);
+                $expiresMessage = 'Licença Vitalícia';
+                $expires = $license->expires_at;
+                if ($expires) {
+                    $expiresMessage = 'Licença expira em ' . $expires->format('d/m/Y') . ' às 23:59:59';
+                }
 
                 return ServiceResponse::success(
                     data: [
                         'access_level' => 'operator',
-                        'license_uuid' => $uuid
+                        'license_uuid' => $uuid,
+                        'license_expires' => $expiresMessage,
                     ],
                     message: 'Usuário autenticado como operador.',
                 );
