@@ -1,0 +1,42 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Utilities\ResponseFormatter;
+use App\Services\UserService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class UserController extends Controller
+{
+    public function __construct(protected UserService $userService)
+    {
+    }
+
+    public function store(StoreUserRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $serviceResponse = $this->userService->store($data);
+        return ResponseFormatter::format($serviceResponse);
+    }
+
+    public function update(StoreUserRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $serviceResponse = $this->userService->update($data);
+        return ResponseFormatter::format($serviceResponse);
+    }
+
+    public function index(): JsonResponse
+    {
+        $serviceResponse = $this->userService->index();
+        return ResponseFormatter::format($serviceResponse);
+    }
+
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $serviceResponse = $this->userService->destroy($id);
+        return ResponseFormatter::format($serviceResponse);
+    }
+}

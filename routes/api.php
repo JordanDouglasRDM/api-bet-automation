@@ -1,10 +1,11 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\InstanceController;
 use App\Http\Controllers\LicenseController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')
@@ -21,6 +22,9 @@ Route::prefix('v1')
         });
         Route::middleware('auth:api')->group(function (): void {
             Route::apiResource('license', LicenseController::class);
+            Route::apiResource('user', UserController::class)
+                ->only(['index', 'store', 'update', 'destroy']);
+
             Route::post('license/delete-batch', [LicenseController::class, 'destroyBatch']);
             Route::post('license/renew-batch', [LicenseController::class, 'renewBatch']);
         });
