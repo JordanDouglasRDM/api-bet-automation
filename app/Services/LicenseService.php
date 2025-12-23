@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Events\LicenseRevokedEvent;
 use App\Exceptions\UnauthorizedException;
 use App\Helpers\Helper;
 use App\Http\Utilities\ServiceResponse;
@@ -264,6 +265,8 @@ class LicenseService
     private function handleRevokeLicense(License $license): string
     {
         $license->updateOrFail(['status' => 'revoked']);
+        event(new LicenseRevokedEvent($license->uuid));
+
         return 'Licença revogada com sucesso.';
     }
 
