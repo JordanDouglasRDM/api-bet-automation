@@ -79,6 +79,8 @@ class LicenseService
                         $item->start_at->toString(),
                         $item->expires_at->toString()
                     ) : '-',
+                    'days_left' => Helper::getDaysLeftToExpires($item, false),
+                    'days_left_formatted' => Helper::getDaysLeftToExpires($item, true),
                     'cambistas_ativos_count' => $item->cambistas_ativos_count ?? '-',
                     'last_use'               => optional($item->last_use)->format('d/m/Y H:i:s') ?? '-',
                     'last_use_iso'           => $item->last_use ? Carbon::parse($item->last_use)->toISOString() : '-',
