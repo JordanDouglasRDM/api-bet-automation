@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Override;
 
-class StoreUserRequest extends FormRequest
+class IndexUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,12 +25,11 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => 'required|string',
-            'login' => 'required|string',
-            'password' => 'required|string',
-            'level' => 'required|in:admin,operator,super',
+            'order_by' => 'required|in:id,code,level,login,created_at,updated_at',
+            'order_direction' => 'required|in:asc,desc',
         ];
     }
+
     #[Override]
     protected function failedValidation(Validator $validator)
     {

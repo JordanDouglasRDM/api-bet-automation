@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexUserRequest;
 use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\Http\Utilities\ResponseFormatter;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
@@ -21,16 +23,17 @@ class UserController extends Controller
         return ResponseFormatter::format($serviceResponse);
     }
 
-    public function update(StoreUserRequest $request): JsonResponse
+    public function update(UpdateUserRequest $request): JsonResponse
     {
         $data = $request->validated();
         $serviceResponse = $this->userService->update($data);
         return ResponseFormatter::format($serviceResponse);
     }
 
-    public function index(): JsonResponse
+    public function index(IndexUserRequest $request): JsonResponse
     {
-        $serviceResponse = $this->userService->index();
+        $data = $request->validated();
+        $serviceResponse = $this->userService->index($data);
         return ResponseFormatter::format($serviceResponse);
     }
 

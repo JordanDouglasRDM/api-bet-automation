@@ -22,7 +22,7 @@ Route::prefix('v1')
         });
         Route::middleware('auth:api')->group(function (): void {
             Route::apiResource('license', LicenseController::class);
-            Route::apiResource('user', UserController::class)
+            Route::apiResource('users', UserController::class)
                 ->only(['index', 'store', 'update', 'destroy']);
 
             Route::post('license/delete-batch', [LicenseController::class, 'destroyBatch']);

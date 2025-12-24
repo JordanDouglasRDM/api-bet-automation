@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Override;
 
-class StoreUserRequest extends FormRequest
+class UpdateUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,11 +25,18 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'id' => 'required|exists:users,id',
             'code' => 'required|string',
             'login' => 'required|string',
-            'password' => 'required|string',
+            'password' => 'nullable|string',
             'level' => 'required|in:admin,operator,super',
         ];
+    }
+    public function validationData(): array
+    {
+        return array_merge($this->all(), [
+            'id' => $this->route('user'),
+        ]);
     }
     #[Override]
     protected function failedValidation(Validator $validator)

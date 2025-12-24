@@ -75,6 +75,6 @@ class User extends Authenticatable implements Auditable, JWTSubject
 
     public function isAdmin(): bool
     {
-        return $this->level === 'admin';
+        return $this->level !== 'operator';
     }
 }

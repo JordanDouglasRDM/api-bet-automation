@@ -19,6 +19,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::factory()->create([
+            'code'     => 'administrator',
+            'login'    => 'jordan',
+            'level'    => 'super',
+            'password' => Hash::make('#Jordan@23'),
+        ]);
+        User::factory()->create([
             'code'     => 'lotoico.vip',
             'login'    => 'jhonny',
             'level'    => 'admin',
