@@ -78,7 +78,7 @@ class LicenseService
                     'days'                   => $item->start_at ? Helper::getDaysBetweenDates(
                         $item->start_at->toString(),
                         $item->expires_at->toString()
-                    ) : 0,
+                    ) : '-',
                     'cambistas_ativos_count' => $item->cambistas_ativos_count ?? '-',
                     'last_use'               => optional($item->last_use)->format('d/m/Y H:i:s') ?? '-',
                     'last_use_iso'           => $item->last_use ? Carbon::parse($item->last_use)->toISOString() : '-',
