@@ -42,6 +42,7 @@ class UpdateLicenseRequest extends FormRequest
             'start_at'   => 'required_if:lifetime,false|date|after_or_equal:today|before_or_equal:expires_at',
             'expires_at' => 'required_if:lifetime,false|date|after_or_equal:start_at',
             'lifetime'   => 'required|boolean',
+            'price'       => 'required|numeric|min:0',
             'code'       => 'required|string',
             'login'      => [
                 'required',

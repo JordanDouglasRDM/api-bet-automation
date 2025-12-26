@@ -32,6 +32,7 @@ class StoreLicenseRequest extends FormRequest
             'lifetime'      => 'required|boolean',
             'users'         => 'required|array',
             'users.*.code'  => 'required|string',
+            'users.*.price'  => 'required|numeric|min:0',
             'users.*.login' => [
                 'required',
                 'string',

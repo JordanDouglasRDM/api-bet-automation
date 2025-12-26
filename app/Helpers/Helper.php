@@ -35,4 +35,10 @@ class Helper
         return $days . ' dias';
     }
 
+    public static function toCurrency($value, string $currency = 'R$'): ?string
+    {
+        if (!$value) return '-';
+        return $currency . ' ' . number_format($value, 2, ',', '.');
+    }
+
 }

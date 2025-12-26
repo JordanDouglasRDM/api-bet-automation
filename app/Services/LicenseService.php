@@ -24,7 +24,10 @@ class LicenseService
             $users = [];
 
             foreach ($data['users'] as $user) {
+                $price = $user['price'];
+                unset($user['price']);
                 $userCreated = User::create($user);
+                $userCreated['price'] = $price;
                 $users[] = $userCreated;
             }
 
@@ -32,6 +35,7 @@ class LicenseService
                 License::create([
                     'user_id'    => $user->id,
                     'status'     => 'active',
+                    'price'      => $user['price'],
                     'start_at'   => $data['lifetime'] ? null : $data['start_at'],
                     'expires_at' => $data['lifetime'] ? null : $data['expires_at'],
                     'lifetime'   => $data['lifetime'],
@@ -39,7 +43,7 @@ class LicenseService
             }
             DB::commit();
 
-            return ServiceResponse::success($data, 'Usuários e licenças cadastrados com sucesso.');
+            return ServiceResponse::success([], 'Usuários e licenças cadastrados com sucesso.');
         } catch (UnauthorizedException $e) {
             DB::rollBack();
 
@@ -67,6 +71,8 @@ class LicenseService
                 return [
                     'id'                     => $item->id,
                     'status'                 => $item->status,
+                    'price'                  => $item->price,
+                    'price_formatted'        => Helper::toCurrency($item->price),
                     'status_translated'      => $item->getStatusTranslated(),
                     'severity_tag'           => $item->getSeverityTag(),
                     'start_at'               => optional($item->start_at)->format('d/m/Y') ?? '-',
@@ -79,8 +85,8 @@ class LicenseService
                         $item->start_at->toString(),
                         $item->expires_at->toString()
                     ) : '-',
-                    'days_left' => Helper::getDaysLeftToExpires($item, false),
-                    'days_left_formatted' => Helper::getDaysLeftToExpires($item, true),
+                    'days_left'              => Helper::getDaysLeftToExpires($item, false),
+                    'days_left_formatted'    => Helper::getDaysLeftToExpires($item, true),
                     'cambistas_ativos_count' => $item->cambistas_ativos_count ?? '-',
                     'last_use'               => optional($item->last_use)->format('d/m/Y H:i:s') ?? '-',
                     'last_use_iso'           => $item->last_use ? Carbon::parse($item->last_use)->toISOString() : '-',
@@ -196,6 +202,7 @@ class LicenseService
                 'start_at'   => $data['start_at'] ?? null,
                 'expires_at' => $data['expires_at'] ?? null,
                 'lifetime'   => $data['lifetime'],
+                'price'      => $data['price'],
             ]);
             $this->expiredLicensesCheck();
 
