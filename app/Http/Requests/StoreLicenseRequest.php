@@ -33,6 +33,7 @@ class StoreLicenseRequest extends FormRequest
             'users'         => 'required|array',
             'users.*.code'  => 'required|string',
             'users.*.price'  => 'required|numeric|min:0',
+            'users.*.indication'  => 'nullable|string|max:255',
             'users.*.login' => [
                 'required',
                 'string',

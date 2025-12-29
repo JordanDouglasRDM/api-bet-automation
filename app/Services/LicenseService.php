@@ -25,9 +25,14 @@ class LicenseService
 
             foreach ($data['users'] as $user) {
                 $price = $user['price'];
+                $indication = $user['indication'];
+                unset($user['indication']);
+
                 unset($user['price']);
                 $userCreated = User::create($user);
+
                 $userCreated['price'] = $price;
+                $userCreated['indication'] = $indication;
                 $users[] = $userCreated;
             }
 
@@ -36,6 +41,7 @@ class LicenseService
                     'user_id'    => $user->id,
                     'status'     => 'active',
                     'price'      => $user['price'],
+                    'indication' => $user['indication'],
                     'start_at'   => $data['lifetime'] ? null : $data['start_at'],
                     'expires_at' => $data['lifetime'] ? null : $data['expires_at'],
                     'lifetime'   => $data['lifetime'],
@@ -72,6 +78,7 @@ class LicenseService
                     'id'                     => $item->id,
                     'status'                 => $item->status,
                     'price'                  => $item->price,
+                    'indication'             => $item->indication ?? '-',
                     'price_formatted'        => Helper::toCurrency($item->price),
                     'status_translated'      => $item->getStatusTranslated(),
                     'severity_tag'           => $item->getSeverityTag(),
@@ -203,6 +210,7 @@ class LicenseService
                 'expires_at' => $data['expires_at'] ?? null,
                 'lifetime'   => $data['lifetime'],
                 'price'      => $data['price'],
+                'indication' => $data['indication'] ?? null,
             ]);
             $this->expiredLicensesCheck();
 

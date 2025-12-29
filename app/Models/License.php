@@ -22,6 +22,7 @@ class License extends BaseModel
         'cambistas_ativos_count',
         'last_use',
         'price',
+        'indication',
     ];
 
     protected $casts = [
